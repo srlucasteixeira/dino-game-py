@@ -4,8 +4,9 @@ from pyglet.gl import GL_NEAREST
 from random import choice, randint
 from enum import Enum
 from sys import exit
+import time
 
-
+# ver documentação em https://api.arcade.academy/en/latest/arcade.key.html
 DEBUG = False
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 450
@@ -137,6 +138,30 @@ class DinoGame(arcade.Window):
             if self.physics_engine.can_jump() :
                 self.physics_engine.jump(6)
                 self.dino_state = DinoStates.JUMPING
+        elif key == arcade.key.A:       # saltos com diferentes intensidades
+            if self.physics_engine.can_jump() :
+                self.physics_engine.jump(1)
+                self.dino_state = DinoStates.JUMPING
+        elif key == arcade.key.S:       # saltos com diferentes intensidades
+            if self.physics_engine.can_jump() :
+                self.physics_engine.jump(2)
+                self.dino_state = DinoStates.JUMPING
+        elif key == arcade.key.D:       # saltos com diferentes intensidades
+            if self.physics_engine.can_jump() :
+                self.physics_engine.jump(3)
+                self.dino_state = DinoStates.JUMPING
+        elif key == arcade.key.F:       # saltos com diferentes intensidades
+            if self.physics_engine.can_jump() :
+                self.physics_engine.jump(4)
+                self.dino_state = DinoStates.JUMPING
+        elif key == arcade.key.G:       # saltos com diferentes intensidades
+            if self.physics_engine.can_jump() :
+                self.physics_engine.jump(5)
+                self.dino_state = DinoStates.JUMPING
+        elif key == arcade.key.H:       # saltos com diferentes intensidades
+            if self.physics_engine.can_jump() :
+                self.physics_engine.jump(5)
+                self.dino_state = DinoStates.JUMPING
         elif key == arcade.key.DOWN:
             self.dino_state = DinoStates.DUCKING
             self.player_sprite.hit_box = self.textures["dino-duck-1"].hit_box_points
@@ -166,6 +191,7 @@ class DinoGame(arcade.Window):
             return
         if self.game_state == GameStates.GAMEOVER2:
             self.player_sprite.change_x = 0
+            time.sleep(1)
             #self.player_sprite.texture = self.textures[crash_textura]
             #self.game_state=GameStates.GAMEOVER2
             return
@@ -179,7 +205,7 @@ class DinoGame(arcade.Window):
         if len(collisions) > 0 and not DEBUG:
             self.dino_state = DinoStates.CRASHING
             if self.game_state == GameStates.PLAYING and not self.game_state == GameStates.GAMEOVER2:
-                self.game_state = GameStates.GAMEOVER1
+                self.game_state = GameStates.GAMEOVER1            
         if self.dino_state == DinoStates.DUCKING:
             self.player_sprite.texture = self.textures[f"dino-duck-{dino_frame}"]
         else:
