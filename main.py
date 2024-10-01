@@ -8,7 +8,7 @@ from sys import exit
 
 DEBUG = False
 SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 150
+SCREEN_HEIGHT = 450
 WINDOW_TITLE = "Dino Game"
 BACKGROUND_COLOR = (247, 247, 247)  # Grey background
 ASSETS_PATH = pathlib.Path(__file__).resolve().parent / "assets"
@@ -18,19 +18,22 @@ ALL_TEXTURES = [
     "dino-run-1",
     "dino-run-2",
     "dino-crash-1",
+    "dino-crash-2",
+    "dino-crash-3",
+    "dino-crash-4",
     "dino-duck-1",
     "dino-duck-2",
     "bird-1",
     "bird-2",
 ]
 PLAYER_SPEED = 2.0
-MAX_CLOUDS = 3
+MAX_CLOUDS = 5
 CLOUD_YPOS_MIN = 100
 CLOUD_YPOS_MAX = 140
 CLOUD_SPEED = -0.5
 
 DinoStates = Enum("DinoStates", "IDLING RUNNING JUMPING DUCKING CRASHING")
-GameStates = Enum("GameStates", "PLAYING GAMEOVER")
+GameStates = Enum("GameStates", "PLAYING GAMEOVER1 GAMEOVER2")
 
 
 class DinoGame(arcade.Window):
@@ -58,7 +61,11 @@ class DinoGame(arcade.Window):
         # Clouds Setup
         self.clouds_list = arcade.SpriteList()
         for i in range(MAX_CLOUDS):
-            cloud_sprite = arcade.Sprite(ASSETS_PATH / "cloud.png")
+            #cloud_sprite = arcade.Sprite(ASSETS_PATH / "cloud.png")
+            
+            #ctism_type = choice(["CTISM1.png", "CTISM2.png", "CTISM3.png"])
+            ctism_type = choice(["CTISM1.png", "CTISM2.png"])
+            cloud_sprite = arcade.Sprite(ASSETS_PATH / ctism_type)
             cloud_sprite.left = randint(0, SCREEN_WIDTH)
             cloud_sprite.top = randint(CLOUD_YPOS_MIN, CLOUD_YPOS_MAX)
             self.clouds_list.append(cloud_sprite)
@@ -83,6 +90,7 @@ class DinoGame(arcade.Window):
         self.player_list.append(self.player_sprite)
         self.scene.add_sprite("player", self.player_sprite)
         self.dino_state = DinoStates.RUNNING
+        self.player_sprite.change_x = PLAYER_SPEED
 
         # Obstacles setup
         self.obstacles_list = arcade.SpriteList()
@@ -95,8 +103,9 @@ class DinoGame(arcade.Window):
 
         # Physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            self.player_sprite, self.horizon_list, gravity_constant=0.4
+            self.player_sprite, self.horizon_list, gravity_constant=0.3
         )
+        
 
     def add_obstacles(self, xmin, xmax):
         xpos = xmin
@@ -125,27 +134,40 @@ class DinoGame(arcade.Window):
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.SPACE:
-            self.dino_state = DinoStates.JUMPING
-            self.physics_engine.jump(6)
+            if self.physics_engine.can_jump() :
+                self.physics_engine.jump(6)
+                self.dino_state = DinoStates.JUMPING
         elif key == arcade.key.DOWN:
             self.dino_state = DinoStates.DUCKING
             self.player_sprite.hit_box = self.textures["dino-duck-1"].hit_box_points
         elif key == arcade.key.ESCAPE:
             exit()
-
+        elif key == arcade.key.KEY_1 :
+            self.player_sprite.change_x +=0.5
+        elif key == arcade.key.KEY_2 :
+            self.player_sprite.change_x -=0.5
+            if self.player_sprite.change_x < 1:
+                self.player_sprite.change_x = 1
     def on_key_release(self, key, modifiers):
         if key == arcade.key.SPACE or key == arcade.key.DOWN:
             self.dino_state = DinoStates.RUNNING
             self.player_sprite.hit_box = self.textures["dino-run-1"].hit_box_points
             if self.player_sprite.center_y < 44:
                 self.player_sprite.center_y = 44
-        if self.game_state == GameStates.GAMEOVER:
+        if self.game_state == GameStates.GAMEOVER2:
             self.setup()
 
     def on_update(self, delta_time):
-        if self.game_state == GameStates.GAMEOVER:
+        if self.game_state == GameStates.GAMEOVER1:
             self.player_sprite.change_x = 0
-            self.player_sprite.texture = self.textures["dino-crash-1"]
+            crash_textura=choice(["dino-crash-1", "dino-crash-2", "dino-crash-3", "dino-crash-4"])
+            self.player_sprite.texture = self.textures[crash_textura]
+            self.game_state=GameStates.GAMEOVER2
+            return
+        if self.game_state == GameStates.GAMEOVER2:
+            self.player_sprite.change_x = 0
+            #self.player_sprite.texture = self.textures[crash_textura]
+            #self.game_state=GameStates.GAMEOVER2
             return
         self.elapsed_time += delta_time
         self.offset = int(self.elapsed_time * 10)
@@ -156,12 +178,13 @@ class DinoGame(arcade.Window):
         collisions = self.player_sprite.collides_with_list(self.obstacles_list)
         if len(collisions) > 0 and not DEBUG:
             self.dino_state = DinoStates.CRASHING
-            self.game_state = GameStates.GAMEOVER
+            if self.game_state == GameStates.PLAYING and not self.game_state == GameStates.GAMEOVER2:
+                self.game_state = GameStates.GAMEOVER1
         if self.dino_state == DinoStates.DUCKING:
             self.player_sprite.texture = self.textures[f"dino-duck-{dino_frame}"]
         else:
             self.player_sprite.texture = self.textures[f"dino-run-{dino_frame}"]
-        self.player_sprite.change_x = PLAYER_SPEED
+        #self.player_sprite.change_x = PLAYER_SPEED
         self.camera_sprites.move((self.player_sprite.left - 30, 0))
         self.score = int(self.player_sprite.left) // 10
         # Bird animation
@@ -205,7 +228,7 @@ class DinoGame(arcade.Window):
             anchor_x="right",
             anchor_y="top",
         )
-        if self.game_state == GameStates.GAMEOVER:
+        if self.game_state == GameStates.GAMEOVER2:
             arcade.draw_text(
                 "G A M E   O V E R",
                 SCREEN_WIDTH // 2,
